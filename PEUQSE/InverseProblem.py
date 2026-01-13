@@ -239,8 +239,8 @@ class parameter_estimation:
             if len(self.UserInput.responses['responses_observed_weighting']) > 0:
                 UserInput.responses_observed_weighting = np.array(nestedObjectsFunctions.makeAtLeast_2dNested(UserInput.responses['responses_observed_weighting']))
                 UserInput.responses_observed_weighting = nestedObjectsFunctions.convertInternalToNumpyArray_2dNested(UserInput.responses_observed_weighting)
-                UserInput.responses_observed_weighting = UserInput.responses_observed_weighting.astype(np.float)
-                UserInput.responses_observed_weight_coefficients = copy.deepcopy(UserInput.responses_observed_weighting).astype(np.float) #initialize the weight_coefficients
+                UserInput.responses_observed_weighting = UserInput.responses_observed_weighting.astype(float)
+                UserInput.responses_observed_weight_coefficients = copy.deepcopy(UserInput.responses_observed_weighting).astype(float) #initialize the weight_coefficients
                 #We'll apply it 1 response at a time.
                 for responseIndex, responseWeightingArray in enumerate(UserInput.responses_observed_weighting):
                     if 0 in responseWeightingArray: #we can't have zeros in weights. So if we have any zeros, we will set the weighting of those to 1E6 times less than other values.
@@ -592,7 +592,7 @@ class parameter_estimation:
         if type(simulationOutput) == type(None):
             return None #This is for the case that the simulation fails. User can have simulationOutput return a None type in case of failure. Perhaps should be made better in future. 
         if len(simulationOutput) == 1: #if a 'nan' is returned, then we'll treat the simulation like a failed simulation.
-            if simulationOutput == np.float('nan'):
+            if simulationOutput == float('nan'):
                 return None 
 
             
@@ -862,7 +862,7 @@ class parameter_estimation:
                 thisResult = [self.map_parameter_set, None, None, None, None, None, None]
                 #thisResultStr = [self.map_logP, str(self.map_parameter_set).replace(",","|").replace("[","").replace('(','').replace(')',''), 'None', 'None', 'None', 'None', 'None', 'None']
             if searchType == 'doMetropolisHastings':
-                self.map_logP = np.float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
+                self.map_logP = float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
                 thisResult = self.doMetropolisHastings(calculatePostBurnInStatistics=calculatePostBurnInStatistics, continueSampling=mcmc_continueSampling)
                 #self.map_logP gets done by itself in doMetropolisHastings
                 #Note that "thisResult" has the form: [self.map_parameter_set, self.mu_AP_parameter_set, self.stdap_parameter_set, self.evidence, self.info_gain, self.post_burn_in_samples, self.post_burn_in_log_posteriors_un_normed_vec]
@@ -878,7 +878,7 @@ class parameter_estimation:
                         self.cumulative_post_burn_in_log_priors_vec = np.vstack((self.cumulative_post_burn_in_log_priors_vec, self.post_burn_in_log_priors_vec))
                         self.cumulative_post_burn_in_log_posteriors_un_normed_vec = np.vstack((self.cumulative_post_burn_in_log_posteriors_un_normed_vec, self.post_burn_in_log_posteriors_un_normed_vec))
             if searchType == 'doEnsembleSliceSampling':
-                self.map_logP = np.float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
+                self.map_logP = float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
                 thisResult = self.doEnsembleSliceSampling(mcmc_nwalkers_direct_input=permutationSearch_mcmc_nwalkers, calculatePostBurnInStatistics=calculatePostBurnInStatistics, walkerInitialDistribution=walkerInitialDistribution, continueSampling=mcmc_continueSampling) 
                 #Note that "thisResult" has the form: [self.map_parameter_set, self.mu_AP_parameter_set, self.stdap_parameter_set, self.evidence, self.info_gain, self.post_burn_in_samples, self.post_burn_in_log_posteriors_un_normed_vec]
                 #self.map_logP gets done by itself in doEnsembleSliceSampling
@@ -894,7 +894,7 @@ class parameter_estimation:
                         self.cumulative_post_burn_in_log_priors_vec = np.vstack((self.cumulative_post_burn_in_log_priors_vec, self.post_burn_in_log_priors_vec))
                         self.cumulative_post_burn_in_log_posteriors_un_normed_vec = np.vstack((self.cumulative_post_burn_in_log_posteriors_un_normed_vec, self.post_burn_in_log_posteriors_un_normed_vec))
             if searchType == 'doEnsembleModifiedMHSampling':
-                self.map_logP = np.float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
+                self.map_logP = float('-inf') #initializing as -inf to have a 'pure' mcmc sampling.
                 thisResult = self.doEnsembleModifiedMHSampling(mcmc_nwalkers_direct_input=permutationSearch_mcmc_nwalkers, calculatePostBurnInStatistics=calculatePostBurnInStatistics, walkerInitialDistribution=walkerInitialDistribution, continueSampling=mcmc_continueSampling) 
                 #Note that "thisResult" has the form: [self.map_parameter_set, self.mu_AP_parameter_set, self.stdap_parameter_set, self.evidence, self.info_gain, self.post_burn_in_samples, self.post_burn_in_log_posteriors_un_normed_vec]
                 #self.map_logP gets done by itself in doEnsembleJumpSampling
