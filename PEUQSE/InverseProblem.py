@@ -44,7 +44,8 @@ class parameter_estimation:
         #Now will automatically populate some variables from UserInput
         #make subdirectories as needed.
         for directoryName in UserInput.directories:
-            if not os.path.exists(directoryName):
+            if not os.path.exists(directoryName) and PEUQSE.parallel_processing.currentProcessorNumber == 0:
+                # only process with rank 0 should be allowed to make directories
                 os.makedirs(directoryName)
 
         #Populate variables for bounds and reduced parameter space.
