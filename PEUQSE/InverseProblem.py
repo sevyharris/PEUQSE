@@ -1,3 +1,4 @@
+import os
 import numpy as np
 #from mpl_toolkits.mplot3d import Axes3D
 #import scipy
@@ -6,13 +7,15 @@ from scipy.stats import multivariate_normal
 import sys
 import time
 import copy
-from collections.abc import Iterable 
+from collections.abc import Iterable
+import PEUQSE.parallel_processing
+
 
 try:
     import CiteSoft
     from CiteSoft import function_call_cite
 except:
-    import os #The below lines are to allow CiteSoftLocal to be called regardless of user's working directory.
+    # The below lines are to allow CiteSoftLocal to be called regardless of user's working directory.
     lenOfFileName = len(os.path.basename(__file__)) #This is the name of **this** file.
     absPathWithoutFileName = os.path.abspath(__file__)[0:-1*lenOfFileName]
     sys.path.append(absPathWithoutFileName)
@@ -26,7 +29,7 @@ class parameter_estimation:
     #Inside this class, a UserInput namespace is provided. This has dictionaries of UserInput choices.
     #However, the code initally parses those choices and then puts processed versions in the SAME name space, but no longer in the dictionaries.
     #So functions in this class should (when possible) call the namespace variables that are not in dictionaries, unless the original userinput is desired.
-    #'inverse problem'. Initialize chain with initial guess (prior if not provided) as starting point, chain burn-in length and total length, and Q (for proposal samples).  Initialize experimental data.  Theta is initialized as the starting point of the chain.  
+    #'inverse problem'. Initialize chain with initial guess (prior if not provided) as starting point, chain burn-in length and total length, and Q (for proposal samples).  Initialize experimental data.  Theta is initialized as the starting point of the chain.
     
     
     software_name = "PEUQSE Bayesian Parameter Estimation"
@@ -40,7 +43,6 @@ class parameter_estimation:
         self.UserInput = UserInput #Note that this is a pointer, so the later lines are within this object.
         #Now will automatically populate some variables from UserInput
         #make subdirectories as needed.
-        import os
         for directoryName in UserInput.directories:
             if not os.path.exists(directoryName):
                 os.makedirs(directoryName)
@@ -103,8 +105,6 @@ class parameter_estimation:
                 UserInput.parameter_estimation_settings['mcmc_parallel_sampling'] = False
                 
         if UserInput.request_mpi == True: #Rank zero needs to clear out the mpi_cached_files directory (unless we are continuing sampling), so check if we are using rank 0.
-            import os; #import sys
-            import PEUQSE.parallel_processing
             if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                 if not os.path.exists('./mpi_cached_files'):
                     os.makedirs('./mpi_cached_files')
@@ -846,7 +846,6 @@ class parameter_estimation:
             if (self.UserInput.parameter_estimation_settings['multistart_parallel_sampling'])== True:
                 #We will only execute the sampling the permutationIndex matches the processor rank.
                 #Additionally, if the rank is 0 and the simulation got here, it will be assumed the person is running this just to find the number of Permutations, so that will be spit out and the simulation ended.
-                import PEUQSE.parallel_processing
                 if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                     print("For the user input settings provided, the number of Permutations+1 will be",  numPermutations+1, ". Please use mpiexec or mpirun with this number for N. If you are not expecting to see this message, change your UserInput choices. You have chosen parallel processing for gridsearch and have run PEUQSE without mpi, which is a procedure to retrieve the number of processor ranks to use for parallelized gridsearch. A typical syntax now would be: mpiexec -n ",  numPermutations+1, " python runfile_for_your_analysis.py" )
                     sys.exit()
@@ -1128,10 +1127,8 @@ class parameter_estimation:
         return bestResultSoFar
 
     def checkIfAllParallelSimulationsDone(self, fileNameBase, fileNamePrefix='', fileNameSuffix=''):
-        import PEUQSE.parallel_processing
         #PEUQSE.parallel_processing.currentProcessorNumber
         numSimulations = PEUQSE.parallel_processing.numSimulations
-        import os
         os.chdir(self.UserInput.directories['pickles']+"mpi_cached_files")
         #now make a list of what we expect.
         simulationsKey = np.ones(numSimulations)
@@ -1155,14 +1152,12 @@ class parameter_estimation:
             return False
 
     def consolidate_parallel_doe_data(self, parallelizationType='conditions'):
-        import PEUQSE.parallel_processing
         #PEUQSE.parallel_processing.currentProcessorNumber
         numSimulations = PEUQSE.parallel_processing.numSimulations
         parModulationNumber = int(self.parModulationPermutationIndex + 1)
         #We will check **only** for this parModulationNumber. That way, it this processor is the last to finish this parModulation, it will do the infoGainMatrix stacking.
         if self.checkIfAllParallelSimulationsDone("conditionsPermutationAndInfoGain_mod"+str(parModulationNumber)+"_cond") == True:
             if parallelizationType.lower() == 'conditions':
-                import os
                 os.chdir(self.UserInput.directories['pickles'] + "mpi_cached_files")
                 self.info_gain_matrix = [] #Initializing this as a blank list, it will be made into an array after the loop.
                 for simulationIndex in range(0,numSimulations): #For each simulation, we need to grab the results.
@@ -1186,9 +1181,7 @@ class parameter_estimation:
             return False #this means we weren't done.
             
     def consolidate_parallel_doe_info_gain_matrices(self):
-        import PEUQSE.parallel_processing
         numSimulations = PEUQSE.parallel_processing.numSimulations        
-        import os
         os.chdir(self.UserInput.directories['pickles'] + "mpi_cached_files")
         info_gains_matrices_list = [] #Initializing this as a blank list, it will be made into an array after the loop.
         for parModulationIndex in range(0,self.numParModulationPermutations): #For each simulation, we need to grab the results.
@@ -1209,13 +1202,11 @@ class parameter_estimation:
     def consolidate_parallel_sampling_data(self, parallelizationType='equal', mpi_cached_files_prefix=''):
         #parallelizationType='equal' means everything will get averaged together. parallelizationType='permutation' will be treated differently, keeps only the best.
         #mpi_cached_files_prefix can be 'mcmc' or 'permutation' or '' and looks for a prefix before 'map_logP_6.pkl' where '6' would be the processor rank.
-        import PEUQSE.parallel_processing
         #PEUQSE.parallel_processing.currentProcessorNumber
         numSimulations = PEUQSE.parallel_processing.numSimulations
         if self.checkIfAllParallelSimulationsDone(mpi_cached_files_prefix+"_map_logP_") == True: #FIXME: Need to make parallelization work even for non-mcmc
             if parallelizationType.lower() == 'permutation':
                 searchType = self.permutation_searchType
-                import os #All of the below happens in the pickles directory
                 os.chdir(self.UserInput.directories['pickles']+"mpi_cached_files")
                 self.listOfPermutations = [] #just initializing.
                 self.permutations_MAP_logP_and_parameters_values = [] #just initializing.
@@ -1280,7 +1271,6 @@ class parameter_estimation:
                     self.exportPostBurnInStatistics()
                     self.UserInput.request_mpi = True #Set this back to true so that consolidating plots etc. doesn't get messed up.
             elif parallelizationType.lower() == 'equal':
-                import os #All of the below happens in the pickles directory
                 os.chdir(self.UserInput.directories['pickles']+"./mpi_cached_files")
                 #These pointers are initialized before the below loop. Mostly in case mpi never actually happened since then after the loop these would be empty.
                 self.cumulative_post_burn_in_samples = self.post_burn_in_samples
@@ -1384,7 +1374,6 @@ class parameter_estimation:
                 if (self.UserInput.doe_settings['parallel_conditions_exploration'])== True:
                     #We will only execute the sampling the permutationIndex matches the processor rank.
                     #Additionally, if the rank is 0 and the simulation got here, it will be assumed the person is running this just to find the number of Permutations, so that will be spit out and the simulation ended.
-                    import PEUQSE.parallel_processing
                     if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                         print("For the user input settings provided, the number of Permutations+1 will be",  numPermutations+1, ". Please use mpiexec or mpirun with this number for N. If you are not expecting to see this message, change your UserInput choices. You have chosen parallel processing for gridsearch and have run PEUQSE without mpi, which is a procedure to retrieve the number of processor ranks to use for parallelized gridsearch. A typical syntax now would be: mpiexec -n ",  numPermutations+1, " python runfile_for_your_analysis.py" )
                         sys.exit()
@@ -1456,7 +1445,6 @@ class parameter_estimation:
                             permutationIndex = conditionsPermutationIndex
                             #We will only execute the sampling the permutationIndex matches the processor rank.
                             #Additionally, if the rank is 0 and the simulation got here, it will be assumed the person is running this just to find the number of Permutations, so that will be spit out and the simulation ended.
-                            import PEUQSE.parallel_processing
                             if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                                 print("For the user input settings provided, the number of Permutations+1 will be",  numPermutations+1, ". Please use mpiexec or mpirun with this number for N. If you are not expecting to see this message, change your UserInput choices. You have chosen parallel processing for gridsearch and have run PEUQSE without mpi, which is a procedure to retrieve the number of processor ranks to use for parallelized gridsearch. A typical syntax now would be: mpiexec -n ",  numPermutations+1, " python runfile_for_your_analysis.py" )
                                 sys.exit()
@@ -1528,7 +1516,6 @@ class parameter_estimation:
             if (self.UserInput.doe_settings['parallel_parameter_modulation'])== True:
                 #We will only execute the sampling the permutationIndex matches the processor rank.
                 #Additionally, if the rank is 0 and the simulation got here, it will be assumed the person is running this just to find the number of Permutations, so that will be spit out and the simulation ended.
-                import PEUQSE.parallel_processing
                 if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                     print("For the user input settings provided, the number of Permutations+1 will be",  numPermutations+1, ". Please use mpiexec or mpirun with this number for N. If you are not expecting to see this message, change your UserInput choices. You have chosen parallel processing for gridsearch and have run PEUQSE without mpi, which is a procedure to retrieve the number of processor ranks to use for parallelized gridsearch. A typical syntax now would be: mpiexec -n ",  numPermutations+1, " python runfile_for_your_analysis.py" )
                     sys.exit()
@@ -1562,7 +1549,7 @@ class parameter_estimation:
           if self.parModulationPermutationIndex+1 != self.numParModulationPermutations:
             return #this means we do nothing because it's not the final parModulation.
           elif self.parModulationPermutationIndex+1 == self.numParModulationPermutations:
-            import PEUQSE.parallel_processing #Even if it's the final parModulation, need to check if it's final combination.
+            #Even if it's the final parModulation, need to check if it's final combination.
             if PEUQSE.parallel_processing.finalProcess == False: #not final combination.
                 return
             elif PEUQSE.parallel_processing.finalProcess == True: 
@@ -1626,7 +1613,6 @@ class parameter_estimation:
                     if self.UserInput.doe_settings['parallel_parameter_modulation'] == False: #This is the normal case.
                         plotting_functions.makeTrisurfacePlot(xValues, yValues, zValues, figure_name = "Info_gain_TrisurfacePlot_modulation_"+str(modulationIndex+1)+plot_suffix, directory = self.UserInput.directories['graphs'])
                     if self.UserInput.doe_settings['parallel_parameter_modulation'] == True: #This is the parallel case. In this case, the actual modulationIndex to attach to the filename is given by the processor rank.
-                        import PEUQSE.parallel_processing
                         plotting_functions.makeTrisurfacePlot(xValues, yValues, zValues, figure_name = "Info_gain_TrisurfacePlot_modulation_"+str(PEUQSE.parallel_processing.currentProcessorNumber)+plot_suffix, directory = self.UserInput.directories['graphs'])
             if self.info_gains_matrices_array_format == 'meshgrid':        
                 for modulationIndex in range(len(local_info_gains_matrices_array)):
@@ -1640,7 +1626,6 @@ class parameter_estimation:
                     if self.UserInput.doe_settings['parallel_parameter_modulation'] == False: #This is the normal case.
                         plotting_functions.makeMeshGridSurfacePlot(XX, YY, ZZ, figure_name = "Info_gain_Meshgrid_modulation_"+str(modulationIndex+1)+plot_suffix, directory = self.UserInput.directories['graphs'])
                     if self.UserInput.doe_settings['parallel_parameter_modulation'] == True: #This is the parallel case. In this case, the actual modulationIndex to attach to the filename is given by the processor rank.
-                        import PEUQSE.parallel_processing
                         plotting_functions.makeMeshGridSurfacePlot(XX, YY, ZZ, figure_name = "Info_gain_Meshgrid_modulation_"+str(PEUQSE.parallel_processing.currentProcessorNumber)+plot_suffix, directory = self.UserInput.directories['graphs'])
         else:
             print("At present, createInfoGainPlots and createInfoGainModulationPlots only create plots when the length of  independent_variable_grid_center is 2. We don't currently support creation of other dimensional plots. The infogain data is being exported into the file _____.csv")
@@ -1943,8 +1928,6 @@ class parameter_estimation:
         file_name_suffix = ''
         directory_name_suffix = ''
         if (self.UserInput.parameter_estimation_settings['mcmc_parallel_sampling'] or self.UserInput.parameter_estimation_settings['multistart_parallel_sampling'] or self.UserInput.doe_settings['parallel_conditions_exploration']) == True: 
-            import PEUQSE.parallel_processing
-            import os
             if PEUQSE.parallel_processing.currentProcessorNumber == 0:
                 pass
             if PEUQSE.parallel_processing.currentProcessorNumber > 0:                
@@ -3370,7 +3353,6 @@ class parameter_estimation:
         #if showFigure is none, then the default showFigure choices will occur for each of the plotting functions.
         print("Creating all plots for PEUQSE PE_object...")
         if self.UserInput.request_mpi == True: #need to check if UserInput.request_mpi is on, since if so we will only make plots after the final process.
-            import PEUQSE.parallel_processing
             if PEUQSE.parallel_processing.finalProcess == True:
                 pass#This will proceed as normal.
             elif PEUQSE.parallel_processing.finalProcess == False:
@@ -3735,7 +3717,6 @@ def load_PE_object(base_file_name, file_name_prefix ='',  file_name_suffix='', f
     return theObject
 
 def deleteAllFilesInDirectory(mydir=''):
-    import os
     import copy
     if mydir == '':
         working_dir=os.getcwd()
