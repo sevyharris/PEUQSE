@@ -10,16 +10,10 @@ import copy
 from collections.abc import Iterable
 import PEUQSE.parallel_processing
 
+sys.path.append(os.path.dirname(__file__))
+import CiteSoftLocal as CiteSoft
+from CiteSoftLocal import function_call_cite
 
-try:
-    import CiteSoft
-    from CiteSoft import function_call_cite
-except:
-    # The below lines are to allow CiteSoftLocal to be called regardless of user's working directory.
-    lenOfFileName = len(os.path.basename(__file__)) #This is the name of **this** file.
-    absPathWithoutFileName = os.path.abspath(__file__)[0:-1*lenOfFileName]
-    sys.path.append(absPathWithoutFileName)
-    import CiteSoftLocal as CiteSoft
 try:
     import UnitTesterSG.nestedObjectsFunctions as nestedObjectsFunctions
 except:
