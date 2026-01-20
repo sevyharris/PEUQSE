@@ -16,7 +16,7 @@ from CiteSoftLocal import function_call_cite
 
 try:
     import UnitTesterSG.nestedObjectsFunctions as nestedObjectsFunctions
-except:
+except ModuleNotFoundError:
     import PEUQSE.nestedObjectsFunctionsLocal as nestedObjectsFunctions
 
 class parameter_estimation:
@@ -417,7 +417,7 @@ class parameter_estimation:
                     self.exportResponses(choiceOrResponsesData="initial") #This will actually call the get logP for the initial guess a second time, which is probably okay.
                     try: #we will try to export the prior as well, but pass if that is not successful.
                         self.exportResponses(choiceOrResponsesData="prior") #This will actually call the get logP for the initial guess a second time, which is probably okay.
-                    except:
+                    except NotImplementedError:
                         pass
             except Exception as exceptionObject:
                 print("The initial test simulation with test parameters of" + str(self.UserInput.InputParameterInitialGuess) + "failed with error " + str(exceptionObject))
@@ -456,7 +456,7 @@ class parameter_estimation:
             logP_and_parameter_values = np.array(mcmc_logP_and_parameters_values)
             try:
                 self.calculatePostBurnInStatistics(calculate_post_burn_in_log_priors_vec = True)
-            except:
+            except NotImplementedError:
                 self.calculatePostBurnInStatistics(calculate_post_burn_in_log_priors_vec = False)
         # below are not needed because they occur in self.calculatePostBurnInStatistics
         # self.map_logP = max(np.array(logP_and_parameter_values[:,0]))
@@ -1019,7 +1019,7 @@ class parameter_estimation:
                     self.discrete_chains_post_burn_in_samples = np.expand_dims(self.post_burn_in_samples, axis=1)
                     if self.UserInput.parameter_estimation_settings['convergence_diagnostics']: #Run convergence diagnostics if UserInput defines it as True
                         self.getConvergenceDiagnostics(self.discrete_chains_post_burn_in_samples)
-                except:
+                except NotImplementedError:
                     print("Could not convertPermutationsToSamples. This usually means there were no finite probability points sampled.")
                     permutationsToSamples = False #changing to false to prevent errors during exporting.
                 
@@ -1589,7 +1589,7 @@ class parameter_estimation:
                     pass
                 if len(self.info_gains_matrices_array) == 0:#in case it exists but is not populated, we'll populated.
                     self.info_gains_matrices_array = np.array([self.info_gain_matrix])
-            except: #if it does not yet exist, we create it and populate it.
+            except NotImplementedError: #if it does not yet exist, we create it and populate it.
                     self.info_gains_matrices_array = np.array([self.info_gain_matrix])
             local_info_gains_matrices_array = self.info_gains_matrices_array #We have to switch to a local variable since that way below we can use the local variable whether we're doing the 'global' info_gains_matrices array or a parameter specific one.
         if parameterIndex!=None:
@@ -1768,7 +1768,7 @@ class parameter_estimation:
                     self.info_gain_KL = self.info_gain_KL + current_info_gain_KL
                 self.info_gain_each_parameter = self.info_gain_KL_each_parameter #could make this optional, but normally shouldn't take much memory.
                 self.info_gain = self.info_gain_KL
-            except:
+            except NotImplementedError:
                 print("unable to calculate KL_divergence info_gain. Calculating log_ratio info_gain.")
                 self.UserInput.parameter_estimation_settings['mcmc_info_gain_returned'] = 'log_ratio'
         if self.UserInput.parameter_estimation_settings['mcmc_info_gain_returned'] == 'log_ratio':
@@ -1859,12 +1859,12 @@ class parameter_estimation:
                     self.post_burn_in_samples_unfiltered = copy.deepcopy(self.post_burn_in_samples)
                     self.post_burn_in_log_posteriors_un_normed_vec_unfiltered = copy.deepcopy(self.post_burn_in_log_posteriors_un_normed_vec)
                     self.post_burn_in_log_priors_vec_unfiltered = copy.deepcopy(self.post_burn_in_log_priors_vec)
-                except:
+                except NotImplementedError:
                     pass
             originalLength = np.shape(self.post_burn_in_log_posteriors_un_normed_vec)[0] 
             try:
                 mergedArray = np.hstack( (self.post_burn_in_log_posteriors_un_normed_vec, self.post_burn_in_log_priors_vec, self.post_burn_in_samples) )
-            except:
+            except NotImplementedError:
                 print("Line 866: There has been an error, here are post_burn_in_log_posteriors_un_normed_vec, post_burn_in_samples, post_burn_in_log_priors_vec", np.shape(self.post_burn_in_log_posteriors_un_normed_vec), np.shape(self.post_burn_in_samples), np.shape(self.post_burn_in_log_priors_vec))
                 # print(self.post_burn_in_log_posteriors_un_normed_vec, self.post_burn_in_samples, self.post_burn_in_log_priors_vec)
                 sys.exit()
@@ -1942,7 +1942,7 @@ class parameter_estimation:
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'mcmc_unfiltered_post_burn_in_parameter_samples'+file_name_suffix+'.csv',self.post_burn_in_samples_unfiltered, delimiter=",")            
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'mcmc_unfiltered_post_burn_in_log_priors_vec'+file_name_suffix+'.csv',self.post_burn_in_log_posteriors_un_normed_vec_unfiltered, delimiter=",")            
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'mcmc_unfiltered_post_burn_in_log_posteriors_un_normed_vec'+file_name_suffix+'.csv',self.post_burn_in_log_priors_vec_unfiltered, delimiter=",")                        
-            except:
+            except NotImplementedError:
                 pass
         with open(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'mcmc_log_file'+file_name_suffix+".txt", 'w') as out_file:
             out_file.write("self.initial_point_parameters:" + str( self.UserInput.InputParameterInitialGuess) + "\n")
@@ -1991,7 +1991,7 @@ class parameter_estimation:
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'permutation_unfiltered_post_burn_in_parameter_samples'+file_name_suffix+'.csv',self.post_burn_in_samples_unfiltered, delimiter=",")            
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'permutation_unfiltered_post_burn_in_log_priors_vec'+file_name_suffix+'.csv',self.post_burn_in_log_posteriors_un_normed_vec_unfiltered, delimiter=",")            
                 np.savetxt(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'permutation_unfiltered_post_burn_in_log_posteriors_un_normed_vec'+file_name_suffix+'.csv',self.post_burn_in_log_priors_vec_unfiltered, delimiter=",")                        
-            except:
+            except NotImplementedError:
                 pass
         with open(self.UserInput.directories['logs_and_csvs']+directory_name_suffix+file_name_prefix+'permutation_log_file'+file_name_suffix+".txt", 'w') as out_file:
             out_file.write("self.initial_point_parameters:" + str( self.UserInput.InputParameterInitialGuess) + "\n")
@@ -2765,7 +2765,7 @@ class parameter_estimation:
             try:
                 scaling_factor = float(self.UserInput.parameter_estimation_settings['scaling_uncertainties_type'])
                 logPrior = logPrior - np.log(scaling_factor)
-            except:
+            except NotImplementedError:
                 if self.UserInput.parameter_estimation_settings['scaling_uncertainties_type'] != "off":
                     print("Warning: undo_scaling_uncertainties_type is set to True, but can only be used with a fixed value for scaling_uncertainties_type.  Skipping the undo.")
         return logPrior
@@ -2808,7 +2808,7 @@ class parameter_estimation:
                 print("WARNING: Your simulation output returned a 'nan' for parameter values " +str(discreteParameterVector) + ". 'nan' values cannot be processed by the PEUQSE software and this set of Parameter Values is being assigned a probability of 0.")
                 self.lastSimulatedResponses = None
                 return None #This is intended for the case that the simulation fails in some way without returning "None". 
-        except:
+        except NotImplementedError:
             pass
         if type(simulationOutputProcessingFunction) == type(None):
             simulatedResponses = simulationOutput 
@@ -2843,12 +2843,12 @@ class parameter_estimation:
         #Check if there are any 'nan' in the simulations array, and treat that as a failure also.
         try:  #normal case
             nans_in_array = np.isnan(simulatedResponses)
-        except: #This exception is for staggered responses. It's not ideal to use an exception, but should not cause too much inefficiency.
+        except NotImplementedError: #This exception is for staggered responses. It's not ideal to use an exception, but should not cause too much inefficiency.
             nans_in_array = []
             for responseData in simulatedResponses:
                 try:
                     nanCheck = np.isnan(responseData).any()
-                except:
+                except NotImplementedError:
                     nanCheck = np.isnan(np.array(responseData, dtype="float")).any() #oddly, for nested data sometimes need to specify the dtype as an array. This is intentionally in an except statement to avoid slowing down the regular case.
                 if nanCheck:
                     nans_in_array.append(True)
@@ -2918,7 +2918,7 @@ class parameter_estimation:
                 if float(log_probability_metric) == float('-inf'):
                     print("Warning: There are likelihood points that have zero probability. If there are too many points like this, the MAP and mu_AP returned will not be meaningful. Parameters: " + str(discreteParameterVectorTuple))
                 return log_probability_metric, simulatedResponses_transformed #Return this rather than going through loop further.
-            except:
+            except NotImplementedError:
                 pass #If it failed, we assume it is not square. For example, it could be 2 responses of length 2 each, which is not actually square.
             #TODO: Put in near-diagonal solution described in github: https://github.com/AdityaSavara/PEUQSE/issues/3
         #If neither of the above return statements have occurred, we should go through the uncertainties per response.
@@ -2935,7 +2935,7 @@ class parameter_estimation:
             if calculate_log_probability_metric_per_value == False: #The normal case.            
                 try: #try to evaluate, but switch to individual values if there is any problem.
                     response_log_probability_metric = multivariate_normal.logpdf(mean=simulatedResponses_transformed[responseIndex],x=observedResponses_transformed[responseIndex],cov=comprehensive_responses_covmat[responseIndex])  #comprehensive_responses_covmat has to be 2D or has to be 1D array/list of variances of length equal to x.
-                except:
+                except NotImplementedError:
                     response_log_probability_metric = float('nan') #this keeps track of failure cases.
                     calculate_log_probability_metric_per_value = False
             if calculate_log_probability_metric_per_value == True:
@@ -2946,7 +2946,7 @@ class parameter_estimation:
                 for responseValueIndex in range(len(simulatedResponses_transformed[responseIndex])):
                     try:
                         current_log_probability_metric = multivariate_normal.logpdf(mean=simulatedResponses_transformed[responseIndex][responseValueIndex],x=observedResponses_transformed[responseIndex][responseValueIndex],cov=comprehensive_responses_covmat[responseIndex][responseValueIndex])    
-                    except: #The above is to catch cases when the multivariate_normal fails.
+                    except NotImplementedError: #The above is to catch cases when the multivariate_normal fails.
                         current_log_probability_metric = float('-inf')
                     #response_log_probability_metric = current_log_probability_metric + response_log_probability_metric
                     if float(current_log_probability_metric) == float('-inf'):
@@ -3355,27 +3355,27 @@ class parameter_estimation:
         try:
             self.makeHistogramsForEachParameter(showFigure=showFigure)               
             if verbose: print("Finished with make histograms function call.")
-        except:
+        except NotImplementedError:
             print("Unable to make histograms plots. This usually means your model is not returning simulated results for most of the sampled parameter possibilities.")
 
 
         try:
             self.makeSamplingScatterMatrixPlot(plot_settings=self.UserInput.scatter_matrix_plots_settings, showFigure=showFigure)             
             if verbose: print("Finished with makeSamplingScatterMatrixPlot function call.")
-        except:
+        except NotImplementedError:
             print("Unable to make scatter matrix plot. This usually means your run is not an MCMC run, or that the sampling did not work well. If you are using Metropolis-Hastings, try EnsembleSliceSampling or try a uniform distribution multistart.")
 
 
         try:
             self.makeScatterHeatMapPlots(plot_settings=self.UserInput.scatter_heatmap_plots_settings, showFigure=showFigure)
             if verbose: print("Finished with make scatter heatmaps function call.")
-        except:
+        except NotImplementedError:
             print("Unable to make scatter heatmap plots. This usually means your run is not an MCMC run, or that the sampling did not work well. If you are using Metropolis-Hastings, try one of the other samplers: EnsembleSliceSampling,  EnsembleJumpSampling,  astroidal distribution multistart, or uniform distribution multistart.")
 
         try:        
             self.createContourPlots(showFigure=showFigure)
             if verbose: print("Finished with create contour plots function call.")
-        except:
+        except NotImplementedError:
             print("Unable to make contour plots. This usually means your run is not an MCMC run. However, it could mean that your prior and posterior are too far from each other for plotting.  You can change contour_plot_settings['colobars'] to false and can also change the contour_plot_settings['axis_limits'] if you know which region you wish to have plotted.")
 
         try:
@@ -3681,7 +3681,7 @@ def dillpickleAnObject(objectToPickle, base_file_name, file_name_prefix ='',  fi
     #Can't use pickle. Need to use dill.
     try:
         import dill
-    except:
+    except ModuleNotFoundError:
         print("To use this feature requires dill. If you don't have it, open an anaconda prompt and type 'pip install dill' or use conda install. https://anaconda.org/anaconda/dill")
     base_file_name = base_file_name.replace(file_name_extension, "") #remove the pkl extension if it’s already there, then we will add it back.
     data_filename = file_name_prefix + base_file_name + file_name_suffix + file_name_extension
@@ -3695,7 +3695,7 @@ def dillpickleAnObject(objectToPickle, base_file_name, file_name_prefix ='',  fi
 def unDillpickleAnObject(base_file_name, file_name_prefix ='',  file_name_suffix='', file_name_extension='.dill'):
     try:
         import dill
-    except:
+    except ModuleNotFoundError:
         print("To use this feature requires dill. If you don't have it, open an anaconda prompt and type 'pip install dill' or use conda install. https://anaconda.org/anaconda/dill")
     base_file_name = base_file_name.replace(file_name_extension, "") #remove the pkl extension if it’s already there, then we will add it back.
     data_filename = file_name_prefix + base_file_name + file_name_suffix + file_name_extension

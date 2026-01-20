@@ -10,7 +10,7 @@ try:
     else:
         using_mpi = True
         
-except:
+except ModuleNotFoundError:
     currentProcessorNumber=0
     numProcessors=1
     using_mpi = False
