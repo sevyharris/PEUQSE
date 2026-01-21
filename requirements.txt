@@ -8,3 +8,4 @@ zeus-mcmc
 dill
 emcee
 # mpi4py  # uncomment this if you want to use the openmpi parallelization
+# statsmodels  # need this for the yulewalker for Geweke stats
