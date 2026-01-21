@@ -2120,7 +2120,7 @@ class parameter_estimation:
         #TODO: make its own plot settings in different commit. 
         try:
             convergence_ouputs = calculateAndPlotConvergenceDiagnostics(discrete_chains_post_burn_in_samples, self.UserInput.model['parameterNamesAndMathTypeExpressionsDict'], self.UserInput.scatter_matrix_plots_settings, self.UserInput.directories['graphs'], showFigure = showFigure)
-        except Exception as theError:
+        except NotImplementedError as theError:
             print("Warning: Unable to calculate and plot convergence diagnostics. The error was:", theError)
             return None #this is to end the function, so it does not crash below.
             
@@ -2472,6 +2472,7 @@ class parameter_estimation:
         zeus_sampler = zeus.EnsembleSampler(self.mcmc_nwalkers, numParameters, logprob_fn=self.getLogP, maxiter=mcmc_maxiter, moves=movesTypeObject) #maxiter=1E4 is the typical number, but we may want to increase it based on some UserInput variable.        
         for trialN in range(0,1000):#Todo: This number of this range is hardcoded but should probably be a user selection.
             try:
+
                 zeus_sampler.run_mcmc(walkerStartPoints, nEnsembleSteps)
                 break
             except Exception as exceptionObject:
@@ -3977,7 +3978,7 @@ def calculateAndPlotConvergenceDiagnostics(discrete_chains_post_burn_in_samples,
         # now plot using PEUQSE.plotting function if createPlots is True
         if createPlots:
             createGewekePlot(z_scores_sum_params_geweke_final_plot_inputs, window_indices_geweke, z_scores_sum_params_percentage_outlier, 'Combined_Parameters', 'All Parameters', graphs_directory, showFigure=showFigure)
-    except Exception as theError:
+    except np.linalg.LinAlgError as theError:
         print('Could not calculated Geweke convergence analysis. The chain length may be too small, so more samples are recommended.')
         print('The Geweke diagnostic graphs failed to be created. The error was:', theError)
         window_indices_geweke = None
