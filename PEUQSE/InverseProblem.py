@@ -39,7 +39,7 @@ class parameter_estimation:
         #make subdirectories as needed.
         for directoryName in UserInput.directories:
             if not os.path.exists(directoryName):
-                os.makedirs(directoryName)
+                os.makedirs(directoryName, exist_ok=True)
 
         #Populate variables for bounds and reduced parameter space.
         self.parameterBoundsOn = bool(len(UserInput.model['InputParameterPriorValues_upperBounds']) + len(UserInput.model['InputParameterPriorValues_lowerBounds']))
